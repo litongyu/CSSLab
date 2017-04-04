@@ -1,0 +1,25 @@
+[http.c:105]
+reqpath(2048 bytes) can be overflowed
+
+    <url_decode(reqpath, sp1);>
+
+[http.c:159]
+value(512 bytes) can be overflowed
+
+    <url_decode(value, sp);>
+
+[http.c:165]
+envvar can be overflowed.
+
+    <sprintf(envvar, "HTTP_%s", buf);>
+
+[http.c:282]
+pn(1024 bytes) can be overflowed
+
+    <strcat(pn, name);>
+
+[http.c:342]
+dst(1024 bytes) can be overflowed
+
+    <strcpy(dst, dirname);>
+

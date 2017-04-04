@@ -1,0 +1,50 @@
+## Place your answers here.
+
+## ex2
+exploit-2a.py triggers [http.c:159]url_decode in http_request_headers. Since the size of value buffer is 512, it can be overflowed by a long request. Then the return address of http_request_headers would be overwirtten and the zookd would crash.
+The crash message is zookfs-exstack[3518]: segfault at 61616161 ip 61616161 sp bfffde10 error 14
+
+exploit-2b.py triggers [http.c:282]strcat in http_serve. Since the size of pn buffer is 1024, it can be overflowed by a long request uri(should be less than 1024 to avoid crash be descripted above). Then the following handler pointer would be overwirtten. When the handler is called in http.c:296, it would crash.
+The segmentation violation message is zookfs-exstack[3548]: segfault at 61616161 ip 61616161 sp bfffd98c error 14.
+
+
+## ex3
+The address of handler(http.c 275) in http_serve is 0xbfffddfc. What we should do is to overwrite it with the address of shellcode. Since the address of pn is 0xbfffd9fc, the offset is 1024. The offset in the request is 1024-16 because pn has "/home/httpd/lab/"(length = 16) originally. Since our shellcode locates on the head of request, so the target address is pn+16(0xbfffda0c).
+
+The tricky point is that the last 3 bytes(%00) of urllib.quote(shellcode) should be removed because it would truncate the url in url_decode(http.c 105).
+
+## ex4
+
+All bugs are found in bugs.txt works for this exercise Since they all have a limited buffer space to be overflowed. So we can constuct a long request, then overflow the ret with the address unlink function and overflow the next with a pointer to the behind unlink target path.
+
+## ex5
+[http.c:30]http_read_line
+If we build a request without '\n', the loop will continue and block in read(http.c:36). Since zookd is single process program, it will block other request.
+It is something like DOS attack.
+We can create a new process or new thread to deal with new socket.
+
+
+[http.c:304]http_serve_file
+
+If we build a request url with '..', the can escape current directory and access any other files on the servers.
+It is dangerous because attacker could build a url like "../../../etc/passwd" to get secrets.
+We can filter the ".." before we use it to get files.
+
+
+## ex6
+[http.c:106]
+Add length check before url_decode
+
+[http.c:167]
+Add length check before url_decode
+
+[http.c:173]
+sprintf -> snprintf
+
+[http.c:290]
+strcat -> strncat
+
+[http.c:352]
+strcpy -> strncpy
+
+
